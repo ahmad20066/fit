@@ -4,6 +4,7 @@ const Exercise = require('../../models/fitness/exercise')
 const WorkoutExercise = require('../../models/fitness/workout_exercise')
 const User = require("../../models/user")
 const { Op } = require("sequelize");
+const WeightRecord = require('../../models/weight_record');
 exports.createWorkout = async (req, res, next) => {
     try {
         const { title, type, user_id, description, duration, exercises, difficulty_level, calories_burned, date } = req.body;
@@ -133,7 +134,6 @@ exports.getWorkout = async (req, res, next) => {
         next(error);
     }
 };
-
 exports.updateWorkout = async (req, res, next) => {
     try {
         const workoutId = req.params.id;
@@ -230,7 +230,13 @@ exports.getUsers = (req, res, next) => {
     User.findAll({
         where: {
             role: "consumer",
+            is_active: true,
+            is_set_up: true,
         },
+        include: {
+            model: WeightRecord,
+            as: "weight"
+        }
     }).then(users => {
         res.status(200).json(users)
     }).catch(e => {
@@ -253,8 +259,13 @@ exports.searchUser = (req, res, next) => {
     User.findAll({
         where: {
             role: "consumer",
+            is_active: true,
             is_set_up: true,
             ...condition
+        },
+        include: {
+            model: WeightRecord,
+            as: "weight"
         }
     })
         .then(users => {

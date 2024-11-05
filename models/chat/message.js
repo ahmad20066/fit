@@ -1,22 +1,23 @@
 const { DataTypes } = require("sequelize")
 const sequelize = require("../index");
 const Chat = require("./chat");
+const User = require("../user");
 const Message = sequelize.define('Message', {
     content: {
         type: DataTypes.TEXT,
         allowNull: false,
     },
-    timestamp: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-    },
+
     sender_id: {
         type: DataTypes.INTEGER,
         references: {
-            model: "users",
+            model: User,
             key: 'id',
         },
+    },
+    file: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     chat_id: {
         type: DataTypes.INTEGER,

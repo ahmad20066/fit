@@ -93,7 +93,8 @@ exports.subscribeToPackage = async (req, res, next) => {
             user_id: req.userId,
             package_id,
             start_date: startDate,
-            end_date: endDate
+            end_date: endDate,
+            pricing_id: pricing.id
         })
 
         await subscription.save();
@@ -176,3 +177,4 @@ exports.markExerciseDone = async (req, res, next) => {
         next(e)
     }
 }
+// exports.renewSubscription = (req,res,next) => {}

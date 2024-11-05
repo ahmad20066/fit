@@ -41,13 +41,6 @@ const User = sequelize.define("User", {
             isInt: true,
         },
     },
-    weight: {
-        type: Sequelize.FLOAT,
-        allowNull: true,
-        validate: {
-            min: 0,
-        },
-    },
     height: {
         type: Sequelize.FLOAT,
         allowNull: true,
@@ -55,7 +48,6 @@ const User = sequelize.define("User", {
             min: 0,
         },
     },
-
     activity_level_id: {
         type: Sequelize.INTEGER,
         references: {

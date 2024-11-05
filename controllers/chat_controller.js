@@ -3,8 +3,9 @@ const Message = require("../models/chat/message");
 const User = require("../models/user");
 exports.sendMessage = async (req, res, next) => {
     try {
-        const { coach_id, content } = req.body;
-        const user_id = req.userId;
+        const { user_id, content } = req.body;
+        const file = req.file?.path;
+        const coach_id = req.userId;
 
         let chat = await Chat.findOne({
             where: { user_id, coach_id }
@@ -17,9 +18,10 @@ exports.sendMessage = async (req, res, next) => {
         const message = await Message.create({
             content,
             sender_id: user_id,
-            chat_id: chat.id
+            chat_id: chat.id,
+            file: file
         });
-
+        req.io.to(`chat_${chat.id}`).emit('new_message', message);
         res.status(201).json({ message });
     } catch (error) {
         next(error);
@@ -27,14 +29,19 @@ exports.sendMessage = async (req, res, next) => {
 };
 exports.getMessages = async (req, res, next) => {
     try {
-        const { chat_id } = req.params;
+        const { chat_id } = req.query;
 
         const messages = await Message.findAll({
             where: { chat_id },
+            attributes: {
+                exclude: ['sender_id']
+            },
             include: [
-                { model: User, as: 'sender', attributes: ['id', 'name', 'role'] }
+                { model: User, as: 'sender', attributes: ['id', 'name', 'role'] },
+
             ],
-            order: [['timestamp', 'ASC']]
+
+            order: [['createdAt', 'ASC']]
         });
 
         res.status(200).json({ messages });
@@ -42,3 +49,16 @@ exports.getMessages = async (req, res, next) => {
         next(error);
     }
 };
+exports.getChatsCoach = async (req, res, next) => {
+    try {
+        const coach_id = req.userId;
+        const chats = await Chat.findAll({
+            where: {
+                coach_id
+            }
+        })
+        res.status(200).json(chats)
+    } catch (e) {
+        next(e)
+    }
+}

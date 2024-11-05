@@ -3,13 +3,20 @@ const WorkoutAttendance = require("../../models/fitness/workout_attendance");
 const WorkoutCompletion = require("../../models/fitness/workout_completion");
 const MealSubscription = require("../../models/meals/meal_subscription");
 const Subscription = require("../../models/subscription");
-const User = require("../../models/user")
+const User = require("../../models/user");
+const WeightRecord = require("../../models/weight_record");
 
 exports.getUsers = async (req, res, next) => {
     try {
+        const { role } = req.query;
         const users = await User.findAll({
             where: {
-                is_active: true
+                is_active: true,
+                role
+            },
+            include: {
+                model: WeightRecord,
+                as: "weight"
             }
         });
         res.status(200).json(users);
@@ -21,7 +28,12 @@ exports.getDeactivatedUsers = async (req, res, next) => {
     try {
         const users = await User.findAll({
             where: {
-                is_active: false
+                is_active: false,
+                role
+            },
+            include: {
+                model: WeightRecord,
+                as: "weight"
             }
         });
         res.status(200).json(users);
@@ -36,6 +48,10 @@ exports.getUsersActiveSubscription = async (req, res, next) => {
                 model: Subscription,
                 where: {
                     is_active: true
+                },
+                include: {
+                    model: WeightRecord,
+                    as: "weight"
                 }
             }
         });
@@ -49,6 +65,9 @@ exports.getUserDetails = (req, res, next) => {
     const { id } = req.params;
     try {
         const user = User.findByPk(id, {
+            where: {
+                role: "consumer"
+            },
             include: [
                 {
                     model: Subscription,

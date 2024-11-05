@@ -22,6 +22,7 @@ const PricingModel = require('./pricing_model');
 const Chat = require('./chat/chat');
 const Message = require('./chat/message');
 const User = require('./user');
+const WeightRecord = require('./weight_record');
 // Package.hasMany(Workout, { foreignKey: "package_id" });
 // Workout.belongsTo(Package, { foreignKey: "package_id" });
 
@@ -41,8 +42,12 @@ MealPlan.hasMany(MealSubscription, { foreignKey: "meal_plan_id", as: "subscripti
 
 Chat.hasMany(Message, { foreignKey: "chat_id", as: "messages" });
 Message.belongsTo(Chat, { foreignKey: "chat_id" })
+Message.belongsTo(User, { foreignKey: "sender_id", as: "sender" });
 
-User.hasMany(Chat, { foreignKey: 'userId', as: 'userChats' });
-User.hasMany(Chat, { foreignKey: 'coachId', as: 'coachChats' });
-Chat.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-Chat.belongsTo(User, { foreignKey: 'coachId', as: 'coach' });
+User.hasMany(Chat, { foreignKey: 'user_id', as: 'userChats' });
+User.hasMany(Chat, { foreignKey: 'coach_id', as: 'coachChats' });
+Chat.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Chat.belongsTo(User, { foreignKey: 'coach_id', as: 'coach' });
+
+WeightRecord.belongsTo(User, { foreignKey: "user_id" })
+User.hasMany(WeightRecord, { foreignKey: "user_id", as: "weight" })

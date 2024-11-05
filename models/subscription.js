@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
 const sequelize = require('./index');
 const User = require('./user')
-const Package = require('./package')
+const Package = require('./package');
+const PricingModel = require('./pricing_model');
 
 const Subscription = sequelize.define("Subscription", {
     id: {
@@ -22,6 +23,14 @@ const Subscription = sequelize.define("Subscription", {
         references: {
             model: Package,
             key: "id",
+        },
+        allowNull: false,
+    },
+    pricing_id: {
+        type: Sequelize.INTEGER,
+        references: {
+            model: PricingModel,
+            key: "id"
         },
         allowNull: false,
     },

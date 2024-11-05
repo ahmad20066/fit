@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
+const WeightRecord = require("../models/weight_record");
 
 const JWT_SECRET = "ahmad_secret";
 
@@ -41,7 +42,11 @@ exports.setUpProfile = async (req, res, next) => {
 
         user.age = age;
         user.gender = gender;
-        user.weight = weight;
+        const weightRecord = new WeightRecord({
+            user_id: userId,
+            weight
+        })
+        await weightRecord.save()
         user.height = height;
         user.activity_level_id = activity_level;
         user.health_goal_id = health_goal;
@@ -72,10 +77,31 @@ exports.register = async (req, res, next) => {
         }
         const existingUser = await User.findOne({ where: { email: email } });
         if (existingUser) {
-            console.log("aaa")
-            const error = new Error("User already exists");
-            error.statusCode = 422;
-            throw error;
+            if (!existingUser.is_active) {
+                existingUser.name = name;
+                existingUser.phone = phone;
+                existingUser.password = await bcrypt.hash(password, 10);
+                existingUser.role = role;
+                existingUser.is_active = true;
+                existingUser.deactivated_at = null;
+                await existingUser.save();
+
+                const token = jwt.sign(
+                    { userId: existingUser.id, role: existingUser.role, is_set_up: existingUser.is_set_up },
+                    JWT_SECRET,
+                    { expiresIn: "1h" }
+                );
+
+                return res.status(200).json({
+                    message: "User registered successfully. OTP sent to your email",
+                    user: { email: existingUser.email },
+                    token
+                });
+            } else {
+                const error = new Error("User already exists.");
+                error.statusCode = 422;
+                throw error;
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -88,7 +114,6 @@ exports.register = async (req, res, next) => {
             role: role,
             age: null,
             gender: null,
-            weight: null,
             height: null,
             activity_level: null,
             health_goal: null,
@@ -119,7 +144,7 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.scope('withPassword').findOne({ where: { email } });
+        const user = await User.scope('withPassword').findOne({ where: { email, is_active: true } });
         if (!user) {
             let error = new Error("Invalid email or password");
             error.statusCode = 400;
@@ -210,3 +235,42 @@ exports.verifyOtp = async (req, res, next) => {
         next(error);
     }
 };
+exports.setNewWeight = (req, res, next) => {
+    try {
+        const { weight } = req.body
+        const user_id = req.userId
+        const weightRecord = new WeightRecord({
+            user_id,
+            weight
+        })
+        res.status(200).json({
+            Message: "Weight Set Successfully"
+        })
+    } catch (e) {
+        next(e)
+    }
+}
+exports.deleteAccount = async (req, res, next) => {
+    try {
+        const user_id = req.userId;
+        const user = await User.findOne({
+            where: {
+                id: user_id,
+                is_active: true
+            }
+        })
+        if (!user) {
+            const error = new Error("User not found");
+            error.statusCode = 404
+            throw error;
+        }
+        user.is_active = false
+        user.deactivated_at = new Date()
+        await user.save()
+        res.status(201).json({
+            Message: "Account Deleted Successfully"
+        })
+    } catch (e) {
+        next(e)
+    }
+}

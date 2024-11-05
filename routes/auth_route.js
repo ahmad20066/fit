@@ -1,10 +1,9 @@
 const express = require("express");
-const { body } = require("express-validator");
+const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const controller = require("../controllers/auth_controller");
 const isAuth = require('../middlewares/isAuth')
 
-// Validation rules for registration
 router.post(
     "/register",
     [
@@ -14,25 +13,40 @@ router.post(
             .isLength({ min: 6 })
             .withMessage("Password must be at least 6 characters long"),
         body("phone").notEmpty().withMessage("Phone number is required"),
-
+        body("role").isIn(["consumer", "admin", "kitchen_staff", "coach"]).withMessage("Invalid role"),
     ],
-    controller.register
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error(errors.array()[0].msg);
+            error.statusCode = 422;
+            next(error);
+        }
+        controller.register(req, res, next);
+    }
 );
 router.post(
     '/setup_profile',
     [
         body("age").isInt({ min: 1 }).withMessage("Please provide a valid age"),
-        body("role").isIn(["consumer", "admin", "kitchen_staff"]).withMessage("Invalid role"),
         body("gender").notEmpty().withMessage("Gender is required"),
         body("height").optional().isFloat().withMessage("Height must be a number"),
         body("weight").optional().isFloat().withMessage("Weight must be a number"),
-        body("activity_level").optional().isString().withMessage("Activity level must be a string"),
-        body("health_goal").optional().isString().withMessage("Health goal must be a string"),
+        body("activity_level").optional().isNumeric().withMessage("Activity level must be an id"),
+        body("health_goal").optional().isNumeric().withMessage("Health goal must be an id"),
         body("dietary_preferences").optional().isString().withMessage("Dietary preferences must be a string"),
         body("fitness_level").optional().isString().withMessage("Fitness level must be a string"),
     ],
     isAuth,
-    controller.setUpProfile
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error(errors.array()[0].msg);
+            error.statusCode = 422;
+            next(error);
+        }
+        controller.setUpProfile(req, res, next);
+    }
 )
 
 router.post(
@@ -41,7 +55,15 @@ router.post(
         body("email").isEmail().withMessage("Please provide a valid email"),
         body("password").notEmpty().withMessage("Password is required"),
     ],
-    controller.login
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error(errors.array()[0].msg);
+            error.statusCode = 422;
+            next(error);
+        }
+        controller.login(req, res, next);
+    }
 );
 
 router.post(
@@ -50,7 +72,15 @@ router.post(
         body("email").isEmail().withMessage("Please provide a valid email"),
         body("otp").isInt().withMessage("OTP must be a valid number"),
     ],
-    controller.verifyOtp
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error(errors.array()[0].msg);
+            error.statusCode = 422;
+            next(error);
+        }
+        controller.verifyOtp(req, res, next);
+    }
 );
 
 router.post(
@@ -60,5 +90,23 @@ router.post(
     ],
     controller.sendOtp
 );
+
+router.post(
+    "/set-weight",
+    isAuth,
+    [
+        body("weight").isNumeric().withMessage("Please Enter a valid weight")
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error(errors.array()[0].msg);
+            error.statusCode = 422;
+            next(error);
+        }
+        controller.setNewWeight(req, res, next);
+    }
+)
+router.post("/delete-account", isAuth, controller.deleteAccount)
 
 module.exports = router;

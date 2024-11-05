@@ -1,6 +1,7 @@
 const Workout = require('../../models/fitness/workout')
 // const WorkoutSession = require('../../models/fitness/workout_session')
-const Exercise = require('../../models/fitness/exercise')
+const Exercise = require('../../models/fitness/exercise');
+const User = require('../../models/user');
 // exports.createGroupWorkout = (req, res, next) => {
 //     const { title, description, duration } = req.body;
 
@@ -9,7 +10,7 @@ const Exercise = require('../../models/fitness/exercise')
 exports.getAllCoaches = async (req, res, next) => {
     try {
         const coaches = await User.findAll({
-            where: { role: 'coach' },
+            where: { role: 'coach', is_active: true },
         });
         res.status(200).json(coaches);
     } catch (error) {
